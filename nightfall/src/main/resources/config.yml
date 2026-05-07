@@ -1,0 +1,89 @@
+# Nightfall — long days, short lethal nights.
+
+# Worlds the plugin acts on. Time control, sleep prevention, and night
+# threats only apply in worlds listed here. Add nether/end at your own
+# risk; they don't have a real day/night cycle.
+worlds:
+  - world
+
+# Real-time minutes for each phase. Vanilla defaults to 10/10.
+day-length-minutes: 30.0
+night-length-minutes: 3.0
+
+# Cancel TimeSkipEvent (NIGHT_SKIP). Players may still enter beds — that
+# sets their respawn point — but the night will not skip.
+prevent-night-skip: true
+
+# Optional message sent to all players in a managed world when a sleep
+# skip is blocked. Empty disables.
+sleep-skip-blocked-message: "&8&oThe night refuses to end."
+
+night:
+  # ----- Runner zombies ----------------------------------------------------
+  # Fraction of zombies (zombies, husks, drowned, zombie villagers) that
+  # become "runners" — Speed II, infinite duration, custom name.
+  runner-chance: 0.30
+  runner-speed-amplifier: 1
+  runner-name: "&cRunner"
+
+  # ----- Door-breaking -----------------------------------------------------
+  # Force zombies to break doors regardless of difficulty. Applies to
+  # plain zombies and zombie villagers. (Husks/drowned can't path
+  # door-break in vanilla.)
+  force-zombie-door-break: true
+
+  # ----- Mob buffs ---------------------------------------------------------
+  # Hostile mobs spawned at night get scaled max-health and attack-damage.
+  # Applies to all org.bukkit.entity.Monster: zombie, skeleton, creeper,
+  # spider, witch, drowned, husk, stray, pillager, vindicator, evoker,
+  # ravager, phantom, wither skeleton, etc.
+  mob-buff:
+    enabled: true
+    max-health-multiplier: 1.5     # +50% HP
+    attack-damage-multiplier: 1.4  # +40% damage
+
+  # ----- Logout dummies (CombatLogX-style) ---------------------------------
+  # If a player disconnects during night in a managed world, a dummy
+  # zombie wearing their gear spawns at their last position. If the
+  # dummy is killed before the player logs back on, the player suffers
+  # a death-on-rejoin (drop inventory at the dummy's death spot, lose
+  # XP). The dummy is fire-resistant so daytime sun won't auto-kill it.
+  logout-dummy:
+    enabled: true
+    # {player} is replaced with the username.
+    name: "&7&o{player} (sleeping)"
+    drop-inventory-on-kill: true
+    clear-xp-on-kill: true
+
+  # ----- Extra spawns ------------------------------------------------------
+  # Periodically spawn additional hostile mobs near players during night
+  # to compensate for the brief duration. Capped per world to avoid lag.
+  extra-spawn:
+    enabled: true
+    interval-seconds: 25
+    per-player-per-cycle: 2
+    max-per-world: 80
+    min-distance: 24
+    max-distance: 40
+    require-darkness: true   # only in light level <= 7
+    # Weighted picks. Higher weight = more common. Names are EntityType
+    # constants. Unknown names are skipped at load time with a warning.
+    mob-weights:
+      ZOMBIE: 5
+      SKELETON: 3
+      SPIDER: 2
+      CREEPER: 1
+
+messages:
+  prefix: "&8[&5Nightfall&8] &r"
+  no-permission: "&cYou don't have permission to do that."
+  reloaded: "&aNightfall config reloaded."
+  status: |-
+    &7World: &f{world}
+    &7Phase: &f{phase}  &8(time {time}/24000)
+    &7Day length: &f{day} min   &7Night length: &f{night} min
+    &7Sleep skip: &f{sleep-skip}   &7Mob buff: &f{mob-buff}
+    &7Extra spawns this world: &f{extras}
+  forced-day: "&eForced day in &f{world}&e."
+  forced-night: "&eForced night in &f{world}&e."
+  unknown-world: "&cThat world isn't loaded."

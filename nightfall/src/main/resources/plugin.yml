@@ -1,0 +1,17 @@
+name: Nightfall
+version: ${project.version}
+main: com.nightfall.NightfallPlugin
+api-version: '1.21'
+description: Long days, short lethal nights. Runner zombies, buffed nighttime mobs, no sleep-skip.
+author: Meng Tech LLC
+
+commands:
+  nightfall:
+    description: Nightfall day/night and threat controls.
+    usage: /nightfall <reload|status|day|night>
+    aliases: [nf]
+
+permissions:
+  nightfall.admin:
+    description: Allows reloading, viewing status, and forcing day/night.
+    default: op
