@@ -204,7 +204,7 @@ public final class NightMobListener implements Listener {
 
         // ---- New mob variants ----
         if (config.mobVariantsEnabled()) {
-            applyMobVariants(entity, isStormy);
+            applyMobVariants(entity, isStormy, distFactor);
         }
 
         // Stat buffs apply to all hostile Monsters.
@@ -344,13 +344,17 @@ public final class NightMobListener implements Listener {
         }
     }
 
-    private void applyMobVariants(LivingEntity entity, boolean isStormy) {
+    private void applyMobVariants(LivingEntity entity, boolean isStormy, double distFactor) {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
+        double chanceMult = 1.0;
+        if (config.variantDistanceScalingEnabled() && distFactor > 0.0) {
+            chanceMult = 1.0 + distFactor * (config.variantDistanceChanceMultiplier() - 1.0);
+        }
 
         // 1. Skeleton Marksman — during thunderstorms
         if (isStormy && entity instanceof Skeleton s) {
             NightfallConfig.VariantEntry v = config.variant("skeleton-marksman");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(marksmanKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
                 s.addPotionEffect(speed);
@@ -363,7 +367,7 @@ public final class NightMobListener implements Listener {
         // 2. Desert Zombie — Husks only
         if (entity instanceof Husk h) {
             NightfallConfig.VariantEntry v = config.variant("desert-zombie");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(desertKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect fireRes = new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, false, false, false);
                 h.addPotionEffect(fireRes);
@@ -374,7 +378,7 @@ public final class NightMobListener implements Listener {
         // 3. Venomous Spider
         if (entity instanceof Spider s) {
             NightfallConfig.VariantEntry v = config.variant("venomous-spider");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(venomousKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
                 s.addPotionEffect(speed);
@@ -385,7 +389,7 @@ public final class NightMobListener implements Listener {
         // 4. Witch Doctor
         if (entity instanceof Witch w) {
             NightfallConfig.VariantEntry v = config.variant("witch-doctor");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(witchDoctorKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
                 w.addPotionEffect(speed);
@@ -396,7 +400,7 @@ public final class NightMobListener implements Listener {
         // 5. Brute Creeper
         if (entity instanceof Creeper c) {
             NightfallConfig.VariantEntry v = config.variant("brute-creeper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(bruteKey, PersistentDataType.BYTE, (byte) 1);
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 c.setExplosionRadius(5);
@@ -410,7 +414,7 @@ public final class NightMobListener implements Listener {
         // 6. Wither Reaper
         if (entity instanceof WitherSkeleton ws) {
             NightfallConfig.VariantEntry v = config.variant("wither-reaper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(witherReaperKey, PersistentDataType.BYTE, (byte) 1);
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 applyAttributeBoost(ws, Attribute.GENERIC_ATTACK_DAMAGE, 0.40, witherReaperKey);
@@ -421,7 +425,7 @@ public final class NightMobListener implements Listener {
         // 7. Frozen Stray
         if (entity instanceof Stray st) {
             NightfallConfig.VariantEntry v = config.variant("frozen-stray");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(frozenKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect resist = new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, false, false, false);
                 st.addPotionEffect(resist);
@@ -435,7 +439,7 @@ public final class NightMobListener implements Listener {
         // 8. Ender Stalker
         if (entity instanceof Enderman em) {
             NightfallConfig.VariantEntry v = config.variant("ender-stalker");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(enderStalkerKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
                 em.addPotionEffect(speed);
@@ -448,7 +452,7 @@ public final class NightMobListener implements Listener {
         // 9. Plague Zombie — plain zombies only (no husk/drowned)
         if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
             NightfallConfig.VariantEntry v = config.variant("plague-zombie");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(plagueKey, PersistentDataType.BYTE, (byte) 1);
                 // Slow themselves down but infect on hit
                 PotionEffect slow = new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 0, false, false, false);
@@ -460,7 +464,7 @@ public final class NightMobListener implements Listener {
         // 10. Vindicator Berserker
         if (entity instanceof Vindicator vin) {
             NightfallConfig.VariantEntry v = config.variant("vindicator-berserker");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(berserkerKey, PersistentDataType.BYTE, (byte) 1);
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
@@ -470,7 +474,7 @@ public final class NightMobListener implements Listener {
         // 11. Phantom Diver
         if (entity instanceof Phantom ph) {
             NightfallConfig.VariantEntry v = config.variant("phantom-diver");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(phantomDiverKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
                 ph.addPotionEffect(speed);
@@ -481,7 +485,7 @@ public final class NightMobListener implements Listener {
         // 12. Pillager Sniper
         if (entity instanceof Pillager p) {
             NightfallConfig.VariantEntry v = config.variant("pillager-sniper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(pillagerSniperKey, PersistentDataType.BYTE, (byte) 1);
                 AttributeInstance follow = p.getAttribute(Attribute.GENERIC_FOLLOW_RANGE);
                 if (follow != null && follow.getBaseValue() < 80.0) follow.setBaseValue(80.0);
@@ -504,7 +508,7 @@ public final class NightMobListener implements Listener {
         // 13. Siege Zombie — plain zombies only
         if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
             NightfallConfig.VariantEntry v = config.variant("siege-zombie");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
                 z.addPotionEffect(speed);
@@ -516,7 +520,7 @@ public final class NightMobListener implements Listener {
         // 14. Flash Creeper — nearly instant boom
         if (entity instanceof Creeper c) {
             NightfallConfig.VariantEntry v = config.variant("flash-creeper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(flashCreeperKey, PersistentDataType.BYTE, (byte) 1);
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 c.setFuseTicks(5);   // 0.25 s — impossible to kite
@@ -530,7 +534,7 @@ public final class NightMobListener implements Listener {
         // 15. Splitter Creeper
         if (entity instanceof Creeper c) {
             NightfallConfig.VariantEntry v = config.variant("splitter-creeper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(splitterCreeperKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
             }
@@ -539,7 +543,7 @@ public final class NightMobListener implements Listener {
         // 16. Volatile Creeper — explodes on death
         if (entity instanceof Creeper c) {
             NightfallConfig.VariantEntry v = config.variant("volatile-creeper");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(volatileCreeperKey, PersistentDataType.BYTE, (byte) 1);
                 entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
                 c.setExplosionRadius(4);
@@ -550,7 +554,7 @@ public final class NightMobListener implements Listener {
         // 17. Web Weaver — spider variant
         if (entity instanceof Spider s) {
             NightfallConfig.VariantEntry v = config.variant("web-weaver");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(webWeaverKey, PersistentDataType.BYTE, (byte) 1);
                 PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
                 s.addPotionEffect(speed);
@@ -561,7 +565,7 @@ public final class NightMobListener implements Listener {
         // 18. Pyro Skeleton
         if (entity instanceof Skeleton s) {
             NightfallConfig.VariantEntry v = config.variant("pyro-skeleton");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(pyroSkeletonKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
             }
@@ -570,7 +574,7 @@ public final class NightMobListener implements Listener {
         // 19. Bomber Skeleton
         if (entity instanceof Skeleton s) {
             NightfallConfig.VariantEntry v = config.variant("bomber-skeleton");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(bomberSkeletonKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
             }
@@ -579,7 +583,7 @@ public final class NightMobListener implements Listener {
         // 20. Blaze Archer
         if (entity instanceof Skeleton s) {
             NightfallConfig.VariantEntry v = config.variant("blaze-archer");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(blazeArcherKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
             }
@@ -588,7 +592,7 @@ public final class NightMobListener implements Listener {
         // 21. Swarm Zombie — spawns multiple zombies at once
         if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
             NightfallConfig.VariantEntry v = config.variant("swarm-zombie");
-            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+            if (v != null && v.enabled && rng.nextDouble() < scaledChance(v.chance, chanceMult)) {
                 entity.getPersistentDataContainer().set(swarmZombieKey, PersistentDataType.BYTE, (byte) 1);
                 name(entity, v.name);
                 // Spawn 2-4 additional zombies nearby (they will trigger CreatureSpawnEvent with CUSTOM reason)
@@ -603,6 +607,10 @@ public final class NightMobListener implements Listener {
                 }
             }
         }
+    }
+
+    private static double scaledChance(double base, double mult) {
+        return Math.min(1.0, base * mult);
     }
 
     private void name(LivingEntity entity, String name) {

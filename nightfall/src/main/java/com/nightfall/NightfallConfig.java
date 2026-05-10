@@ -90,6 +90,8 @@ public final class NightfallConfig {
     private LinkedHashMap<EntityType, Integer> extraMobWeights;
 
     private boolean mobVariantsEnabled;
+    private boolean variantDistanceScalingEnabled;
+    private double variantDistanceChanceMultiplier;
     private final Map<String, VariantEntry> variants = new HashMap<>();
 
     private FileConfiguration root;
@@ -227,6 +229,8 @@ public final class NightfallConfig {
 
         ConfigurationSection mv = c.getConfigurationSection("night.mob-variants");
         this.mobVariantsEnabled = mv != null && mv.getBoolean("enabled", true);
+        this.variantDistanceScalingEnabled = mv != null && mv.getBoolean("distance-scaling-enabled", true);
+        this.variantDistanceChanceMultiplier = Math.max(1.0, mv != null ? mv.getDouble("distance-chance-multiplier", 2.0) : 2.0);
         if (mv != null) {
             for (String key : mv.getKeys(false)) {
                 if ("enabled".equals(key)) continue;
@@ -365,6 +369,8 @@ public final class NightfallConfig {
     public Map<EntityType, Integer> extraMobWeights()  { return extraMobWeights; }
 
     public boolean mobVariantsEnabled() { return mobVariantsEnabled; }
+    public boolean variantDistanceScalingEnabled() { return variantDistanceScalingEnabled; }
+    public double variantDistanceChanceMultiplier() { return variantDistanceChanceMultiplier; }
     public VariantEntry variant(String key) { return variants.get(key); }
 
     public String message(String key, String fallback) {

@@ -157,6 +157,8 @@ night:
   # spawn chance (rolled independently when the base mob type spawns).
   mob-variants:
     enabled: true
+    distance-scaling-enabled: true   # variant spawn chance grows with distance
+    distance-chance-multiplier: 2.0  # at max distance, chance is 2× base
     skeleton-marksman:
       enabled: true
       chance: 0.15
