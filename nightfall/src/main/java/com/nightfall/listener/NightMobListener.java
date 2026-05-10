@@ -1,6 +1,7 @@
 package com.nightfall.listener;
 
 import com.nightfall.NightfallConfig;
+import com.nightfall.gear.MobGearApplier;
 import com.nightfall.time.TimeController;
 import com.nightfall.util.Text;
 import net.kyori.adventure.text.Component;
@@ -38,6 +39,8 @@ import java.util.concurrent.ThreadLocalRandom;
  *   - Jumper: ~jumperChance of zombies get Jump Boost + custom name.
  *   - Charged creepers: during thunderstorms, creepers spawn powered.
  *   - Storm buff: during rain/thunder, all hostiles get extra HP/damage.
+ *   - Distance scaling: stats scale infinitely with distance from spawn.
+ *   - Mob gear: enchanted armor/weapons that scale with distance.
  *   - Mob buff: hostile mobs get scaled max-health and attack-damage.
  *   - Spider speed: spiders get a small speed boost.
  *   - Skeleton accuracy: skeletons get increased follow range.
@@ -61,6 +64,7 @@ public final class NightMobListener implements Listener {
     );
 
     private final NightfallConfig config;
+    private final MobGearApplier gearApplier;
     /** Marks an entity as already buffed so we never double-stack modifiers. */
     private final NamespacedKey buffedKey;
     /** Marks runner zombies (used by status counts and future tooling). */
@@ -77,6 +81,7 @@ public final class NightMobListener implements Listener {
 
     public NightMobListener(Plugin plugin, NightfallConfig config) {
         this.config = config;
+        this.gearApplier = new MobGearApplier(config);
         this.buffedKey = new NamespacedKey(plugin, "night_buffed");
         this.runnerKey = new NamespacedKey(plugin, "runner");
         this.jumperKey = new NamespacedKey(plugin, "jumper");
@@ -93,7 +98,7 @@ public final class NightMobListener implements Listener {
         if (!ELIGIBLE_REASONS.contains(event.getSpawnReason())) return;
 
         LivingEntity entity = event.getEntity();
-        if (!(entity instanceof Monster)) return;
+        if (!(entity instanceof Monster monster)) return;
         if (!config.managesWorld(entity.getWorld().getName())) return;
         if (!TimeController.isNight(entity.getWorld())) return;
 
@@ -102,6 +107,8 @@ public final class NightMobListener implements Listener {
         entity.getPersistentDataContainer().set(buffedKey, PersistentDataType.BYTE, (byte) 1);
 
         boolean isStormy = entity.getWorld().hasStorm();
+        double distance = horizontalDistanceFromSpawn(entity);
+        double distFactor = computeDistanceFactor(distance);
 
         // Door-breaking — restrict to plain Zombies and ZombieVillagers.
         // Drowned/Husk don't have the BreakDoorGoal in vanilla and we
@@ -157,16 +164,12 @@ public final class NightMobListener implements Listener {
                         config.stormAttackMultiplier() - 1.0, stormAtkModKey);
             }
 
-            // Distance scaling stacks on top of everything.
-            double distFactor = 0.0;
-            if (config.distanceScalingEnabled()) {
-                distFactor = computeDistanceFactor(entity);
-                if (distFactor > 0.0) {
-                    applyAttributeBoost(entity, Attribute.GENERIC_MAX_HEALTH,
-                            distFactor * (config.distanceScalingHealthMultiplier() - 1.0), distHpModKey);
-                    applyAttributeBoost(entity, Attribute.GENERIC_ATTACK_DAMAGE,
-                            distFactor * (config.distanceScalingAttackMultiplier() - 1.0), distAtkModKey);
-                }
+            // Distance scaling stacks infinitely on top of everything.
+            if (config.distanceScalingEnabled() && distFactor > 0.0) {
+                applyAttributeBoost(entity, Attribute.GENERIC_MAX_HEALTH,
+                        distFactor * (config.distanceScalingHealthMultiplier() - 1.0), distHpModKey);
+                applyAttributeBoost(entity, Attribute.GENERIC_ATTACK_DAMAGE,
+                        distFactor * (config.distanceScalingAttackMultiplier() - 1.0), distAtkModKey);
             }
 
             // Top up to the new max — without this, a 20-HP zombie stays
@@ -183,21 +186,30 @@ public final class NightMobListener implements Listener {
                 entity.setHealth(Math.min(entity.getHealth() * totalHealthMult, hp.getValue()));
             }
         }
+
+        // Gear — armor and weapons with distance-scaled enchantments.
+        gearApplier.apply(monster, distance);
     }
 
-    private double computeDistanceFactor(LivingEntity entity) {
+    private double horizontalDistanceFromSpawn(LivingEntity entity) {
         World w = entity.getWorld();
-        Location spawn = config.distanceScalingUseWorldSpawn() ? w.getSpawnLocation() : new Location(w, 0.0, 64.0, 0.0);
+        Location spawn = config.distanceScalingUseWorldSpawn()
+                ? w.getSpawnLocation()
+                : new Location(w, 0.0, 64.0, 0.0);
         double dx = entity.getLocation().getX() - spawn.getX();
         double dz = entity.getLocation().getZ() - spawn.getZ();
-        double distance = Math.sqrt(dx * dx + dz * dz);
+        return Math.sqrt(dx * dx + dz * dz);
+    }
 
+    private double computeDistanceFactor(double distance) {
+        if (!config.distanceScalingEnabled()) return 0.0;
         double start = config.distanceScalingStart();
         double max   = config.distanceScalingMax();
         if (distance <= start) return 0.0;
         double range = max - start;
         if (range <= 0) return 0.0;
-        return Math.min(1.0, (distance - start) / range);
+        // No clamp — factor grows linearly forever.
+        return (distance - start) / range;
     }
 
     private void applyRunner(LivingEntity zombie) {

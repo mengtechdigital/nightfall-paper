@@ -18,6 +18,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -25,18 +26,34 @@ import java.util.concurrent.ThreadLocalRandom;
  * the (now brief) night. Caps total nightfall-tagged mobs per world to
  * avoid runaway spawns.
  *
+ * When {@code night.disable-vanilla-night-spawns} is true, this task
+ * becomes the PRIMARY source of hostile mobs at night. It spawns mobs
+ * directly near players in a horizontal ring, which makes AFK dark-room
+ * farms completely ineffective.
+ *
  * Spawn-loc selection: pick a random offset in a horizontal ring around
  * the player ({@code minDistance}..{@code maxDistance}), drop the y
  * coordinate to the highest non-air solid block, then verify there's a
  * 2-block air gap above and (optionally) light level <= 7.
  *
+ * Flying mobs (Blaze, Ghast, Phantom, Vex) spawn in the air above the
+ * ground instead of on it, and skip the darkness check.
+ *
  * Tagged mobs flow through NightMobListener like any other CUSTOM spawn
- * — they get the runner roll, attribute buffs, and door-break.
+ * — they get the runner roll, attribute buffs, door-break, gear, etc.
  */
 public final class ExtraSpawnTask implements Runnable {
 
     /** Tries per spawn slot before we give up and move to the next slot. */
     private static final int LOC_TRIES = 8;
+
+    /** Mobs that spawn in the air rather than on the ground. */
+    private static final Set<EntityType> FLYING_MOBS = Set.of(
+            EntityType.BLAZE,
+            EntityType.GHAST,
+            EntityType.PHANTOM,
+            EntityType.VEX
+    );
 
     private final Plugin plugin;
     private final NightfallConfig config;
@@ -83,12 +100,23 @@ public final class ExtraSpawnTask implements Runnable {
         World w = player.getWorld();
         EntityType type = pickWeightedType(config.extraMobWeights());
         if (type == null) return false;
+        boolean isFlying = FLYING_MOBS.contains(type);
 
         for (int attempt = 0; attempt < LOC_TRIES; attempt++) {
             Location loc = pickRingLocation(player);
             if (loc == null) continue;
-            if (!isSpawnable(loc)) continue;
-            if (config.extraRequireDarkness() && loc.getBlock().getLightLevel() > 7) continue;
+
+            if (isFlying) {
+                // Spawn in air 5–15 blocks above the ground.
+                double airY = loc.getY() + 5.0 + ThreadLocalRandom.current().nextDouble() * 10.0;
+                loc.setY(airY);
+                // Ensure two air blocks.
+                if (!loc.getBlock().getType().isAir()) continue;
+                if (!loc.getBlock().getRelative(0, 1, 0).getType().isAir()) continue;
+            } else {
+                if (!isSpawnable(loc)) continue;
+                if (config.extraRequireDarkness() && loc.getBlock().getLightLevel() > 7) continue;
+            }
 
             Entity spawned = w.spawnEntity(loc, type, CreatureSpawnEvent.SpawnReason.CUSTOM);
             if (spawned == null) return false;

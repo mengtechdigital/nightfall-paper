@@ -59,6 +59,14 @@ public final class NightfallConfig {
     private double distanceScalingHealthMultiplier;
     private double distanceScalingAttackMultiplier;
 
+    private boolean disableVanillaNightSpawns;
+
+    private boolean mobGearEnabled;
+    private double mobGearBaseChance;
+    private double mobGearChancePer1000;
+    private boolean mobGearAllowOverlevel;
+    private double mobGearDropChance;
+
     private double lootXpMultiplier;
     private boolean extraLootEnabled;
     private double extraLootChance;
@@ -130,6 +138,15 @@ public final class NightfallConfig {
                                                         dist != null ? dist.getDouble("max-distance", 5000.0) : 5000.0);
         this.distanceScalingHealthMultiplier = Math.max(1.0, dist != null ? dist.getDouble("max-health-multiplier", 2.0) : 2.0);
         this.distanceScalingAttackMultiplier = Math.max(1.0, dist != null ? dist.getDouble("attack-damage-multiplier", 1.5) : 1.5);
+
+        this.disableVanillaNightSpawns = c.getBoolean("night.disable-vanilla-night-spawns", true);
+
+        ConfigurationSection gear = c.getConfigurationSection("night.mob-gear");
+        this.mobGearEnabled         = gear != null && gear.getBoolean("enabled", true);
+        this.mobGearBaseChance      = clamp(gear != null ? gear.getDouble("base-chance", 0.15) : 0.15, 0.0, 1.0);
+        this.mobGearChancePer1000   = clamp(gear != null ? gear.getDouble("chance-per-1000-blocks", 0.08) : 0.08, 0.0, 1.0);
+        this.mobGearAllowOverlevel  = gear != null && gear.getBoolean("allow-overlevel-enchants", true);
+        this.mobGearDropChance      = clamp(gear != null ? gear.getDouble("drop-chance", 0.08) : 0.08, 0.0, 1.0);
 
         ConfigurationSection loot = c.getConfigurationSection("night.loot");
         this.lootXpMultiplier      = Math.max(1.0, loot != null ? loot.getDouble("xp-multiplier", 2.0) : 2.0);
@@ -253,6 +270,14 @@ public final class NightfallConfig {
     public double distanceScalingMax()               { return distanceScalingMax; }
     public double distanceScalingHealthMultiplier()  { return distanceScalingHealthMultiplier; }
     public double distanceScalingAttackMultiplier()  { return distanceScalingAttackMultiplier; }
+
+    public boolean disableVanillaNightSpawns() { return disableVanillaNightSpawns; }
+
+    public boolean mobGearEnabled()          { return mobGearEnabled; }
+    public double mobGearBaseChance()        { return mobGearBaseChance; }
+    public double mobGearChancePer1000()     { return mobGearChancePer1000; }
+    public boolean mobGearAllowOverlevel()   { return mobGearAllowOverlevel; }
+    public double mobGearDropChance()        { return mobGearDropChance; }
 
     public double lootXpMultiplier()         { return lootXpMultiplier; }
     public boolean extraLootEnabled()        { return extraLootEnabled; }

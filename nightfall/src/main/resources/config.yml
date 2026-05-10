@@ -65,15 +65,34 @@ night:
 
   # ----- Distance scaling --------------------------------------------------
   # The further from spawn a mob spawns, the stronger it becomes.
-  # Scaling is linear from start-distance (0% bonus) to max-distance
-  # (full bonus). Uses world spawn point by default; disable to use 0,0.
+  # Scaling starts at start-distance (0% bonus) and grows linearly.
+  # At max-distance the multiplier equals the configured value; beyond
+  # that it keeps stacking forever — so 10,000 blocks out is 2× the
+  # multiplier, 15,000 blocks is 3×, etc.
   distance-scaling:
     enabled: true
     use-world-spawn: true
     start-distance: 500            # blocks from spawn where scaling begins
-    max-distance: 5000             # blocks where scaling caps
-    max-health-multiplier: 2.0     # up to +100% HP at max distance
-    attack-damage-multiplier: 1.5  # up to +50% damage at max distance
+    max-distance: 5000             # blocks for 1.0 factor; beyond = infinite growth
+    max-health-multiplier: 2.0     # +100% HP at factor 1.0; doubles every 5k beyond
+    attack-damage-multiplier: 1.5  # +50% damage at factor 1.0; stacks infinitely
+
+  # ----- Mob gear ----------------------------------------------------------
+  # Night mobs can spawn wearing enchanted armor and weapons. Gear tier
+  # and enchantment levels scale with distance from spawn and can exceed
+  # vanilla limits (Protection X, Sharpness XV, etc.).
+  mob-gear:
+    enabled: true
+    base-chance: 0.15              # 15% at spawn
+    chance-per-1000-blocks: 0.08   # +8% per 1k blocks from spawn
+    allow-overlevel-enchants: true # allow above vanilla max levels
+    drop-chance: 0.08              # chance each gear piece drops on death
+
+  # ----- Vanilla spawn blocker ---------------------------------------------
+  # Cancels all vanilla NATURAL hostile mob spawns at night in managed
+  # worlds. This kills AFK mob farms because mobs no longer spawn in
+  # dark rooms — they only spawn near players via our extra-spawn system.
+  disable-vanilla-night-spawns: true
 
   # ----- Loot --------------------------------------------------------------
   # Buffed night mobs drop bonus XP and have a chance to roll extra items.
@@ -133,23 +152,35 @@ night:
     clear-xp-on-kill: true
 
   # ----- Extra spawns ------------------------------------------------------
-  # Periodically spawn additional hostile mobs near players during night
-  # to compensate for the brief duration. Capped per world to avoid lag.
+  # Periodically spawn additional hostile mobs near players during night.
+  # This now acts as the PRIMARY spawn system when vanilla night spawns
+  # are disabled. Mobs are picked from the weighted list below — cross-
+  # world mobs (Blaze, Ghast, Wither Skeleton, etc.) can invade.
+  #
+  # Flying mobs (Blaze, Ghast, Phantom, Vex) spawn in the air above the
+  # target location instead of on the ground.
   extra-spawn:
     enabled: true
-    interval-seconds: 25
-    per-player-per-cycle: 2
-    max-per-world: 80
-    min-distance: 24
-    max-distance: 40
-    require-darkness: true   # only in light level <= 7
+    interval-seconds: 8            # how often the task runs
+    per-player-per-cycle: 4        # mobs spawned per player each tick
+    max-per-world: 120             # hard cap per managed world
+    min-distance: 20               # min horizontal distance from player
+    max-distance: 40               # max horizontal distance from player
+    require-darkness: true         # only in light level <= 7 (ignored for flyers)
     # Weighted picks. Higher weight = more common. Names are EntityType
     # constants. Unknown names are skipped at load time with a warning.
     mob-weights:
-      ZOMBIE: 5
-      SKELETON: 3
-      SPIDER: 2
-      CREEPER: 1
+      ZOMBIE: 6
+      SKELETON: 4
+      SPIDER: 3
+      CREEPER: 2
+      WITCH: 2
+      BLAZE: 1
+      GHAST: 1
+      WITHER_SKELETON: 1
+      PIGLIN: 1
+      ENDERMAN: 1
+      MAGMA_CUBE: 1
 
 messages:
   prefix: "&8[&5Nightfall&8] &r"

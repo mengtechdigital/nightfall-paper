@@ -6,6 +6,7 @@ import com.nightfall.listener.LogoutDummyListener;
 import com.nightfall.listener.MobDeathListener;
 import com.nightfall.listener.NightMobListener;
 import com.nightfall.listener.SleepBlocker;
+import com.nightfall.listener.VanillaSpawnBlocker;
 import com.nightfall.spawn.ExtraSpawnTask;
 import com.nightfall.spawn.JumperZombieTask;
 import com.nightfall.time.TimeController;
@@ -46,6 +47,7 @@ public final class NightfallPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SleepBlocker(config), this);
         getServer().getPluginManager().registerEvents(new LogoutDummyListener(dummyManager), this);
         getServer().getPluginManager().registerEvents(new MobDeathListener(config, nightMobListener.buffedKey()), this);
+        getServer().getPluginManager().registerEvents(new VanillaSpawnBlocker(config), this);
 
         rescheduleExtraSpawnTask();
 
