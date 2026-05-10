@@ -20,9 +20,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * /nightfall reload | status | day [world] | night [world]
+ * /nightfall reload | status | day [world] | night [world] | mobs
  *
- * All subcommands gate on the nightfall.admin permission.
+ * Admin subcommands (reload, status, day, night) require nightfall.admin.
+ * The "mobs" subcommand opens the variant GUI and is open to all players.
  */
 public final class NightfallCommand implements CommandExecutor, TabCompleter {
 
@@ -45,15 +46,20 @@ public final class NightfallCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("nightfall.admin")) {
-            send(sender, "no-permission", "&cYou don't have permission to do that.");
-            return true;
-        }
         if (args.length == 0) {
-            send(sender, null, "&7Usage: /nightfall <reload|status|day|night>");
+            send(sender, null, "&7Usage: /nightfall <reload|status|day|night|mobs>");
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
+
+        // Admin-only subcommands
+        if (sub.equals("reload") || sub.equals("status") || sub.equals("day") || sub.equals("night")) {
+            if (!sender.hasPermission("nightfall.admin")) {
+                send(sender, "no-permission", "&cYou don't have permission to do that.");
+                return true;
+            }
+        }
+
         switch (sub) {
             case "reload" -> runReload(sender);
             case "status" -> runStatus(sender, args);
@@ -152,13 +158,19 @@ public final class NightfallCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             String prefix = args[0].toLowerCase(Locale.ROOT);
             List<String> out = new ArrayList<>();
-            for (String s : SUBS) if (s.startsWith(prefix)) out.add(s);
+            for (String s : SUBS) {
+                if (!s.startsWith(prefix)) continue;
+                if ((s.equals("reload") || s.equals("status") || s.equals("day") || s.equals("night"))
+                        && !sender.hasPermission("nightfall.admin")) {
+                    continue;
+                }
+                out.add(s);
+            }
             return out;
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("status")
                 || args[0].equalsIgnoreCase("day")
-                || args[0].equalsIgnoreCase("night")
-                || args[0].equalsIgnoreCase("mobs"))) {
+                || args[0].equalsIgnoreCase("night"))) {
             String prefix = args[1].toLowerCase(Locale.ROOT);
             List<String> out = new ArrayList<>();
             for (World w : Bukkit.getWorlds()) {
