@@ -8,7 +8,7 @@ worlds:
 
 # Real-time minutes for each phase. Vanilla defaults to 10/10.
 day-length-minutes: 30.0
-night-length-minutes: 3.0
+night-length-minutes: 6.0
 
 # Cancel TimeSkipEvent (NIGHT_SKIP). Players may still enter beds — that
 # sets their respawn point — but the night will not skip.
@@ -22,9 +22,16 @@ night:
   # ----- Runner zombies ----------------------------------------------------
   # Fraction of zombies (zombies, husks, drowned, zombie villagers) that
   # become "runners" — Speed II, infinite duration, custom name.
-  runner-chance: 0.30
+  runner-chance: 0.35
   runner-speed-amplifier: 1
   runner-name: "&cRunner"
+
+  # ----- Jumper zombies ----------------------------------------------------
+  # Fraction of zombies that become "jumpers" — Jump Boost + periodic
+  # leaps toward nearby players. Stacks with runners (a zombie can be both).
+  jumper-chance: 0.25
+  jumper-jump-amplifier: 2
+  jumper-name: "&2Jumper"
 
   # ----- Door-breaking -----------------------------------------------------
   # Force zombies to break doors regardless of difficulty. Applies to
@@ -39,8 +46,78 @@ night:
   # ravager, phantom, wither skeleton, etc.
   mob-buff:
     enabled: true
-    max-health-multiplier: 1.5     # +50% HP
-    attack-damage-multiplier: 1.4  # +40% damage
+    max-health-multiplier: 2.0     # +100% HP
+    attack-damage-multiplier: 1.6  # +60% damage
+
+  # ----- Charged creepers --------------------------------------------------
+  # During thunderstorms, creepers have a chance to spawn already charged.
+  charged-creeper:
+    enabled: true
+    chance: 0.60                   # 60% during thunderstorms
+
+  # ----- Storm buff --------------------------------------------------------
+  # During rain or thunderstorms, all hostile mobs get an extra stat boost
+  # on top of the normal mob-buff multipliers.
+  storm-buff:
+    enabled: true
+    max-health-multiplier: 1.25    # +25% HP on top of base buff
+    attack-damage-multiplier: 1.15 # +15% damage on top of base buff
+
+  # ----- Distance scaling --------------------------------------------------
+  # The further from spawn a mob spawns, the stronger it becomes.
+  # Scaling is linear from start-distance (0% bonus) to max-distance
+  # (full bonus). Uses world spawn point by default; disable to use 0,0.
+  distance-scaling:
+    enabled: true
+    use-world-spawn: true
+    start-distance: 500            # blocks from spawn where scaling begins
+    max-distance: 5000             # blocks where scaling caps
+    max-health-multiplier: 2.0     # up to +100% HP at max distance
+    attack-damage-multiplier: 1.5  # up to +50% damage at max distance
+
+  # ----- Loot --------------------------------------------------------------
+  # Buffed night mobs drop bonus XP and have a chance to roll extra items.
+  # Only mobs that were modified by Nightfall (natural night spawns and
+  # extra spawns) give bonus loot — spawner-farm mobs are excluded.
+  loot:
+    xp-multiplier: 2.0
+    extra-loot:
+      enabled: true
+      base-chance: 0.20            # 20% chance for an extra drop
+      storm-bonus: 0.15            # +15% during rain/thunder (35% total)
+      drops:
+        IRON_NUGGET:
+          weight: 30
+          min: 1
+          max: 3
+        ARROW:
+          weight: 25
+          min: 2
+          max: 4
+        BONE:
+          weight: 20
+          min: 1
+          max: 2
+        GOLD_NUGGET:
+          weight: 15
+          min: 1
+          max: 2
+        LAPIS_LAZULI:
+          weight: 12
+          min: 1
+          max: 3
+        GLOWSTONE_DUST:
+          weight: 10
+          min: 1
+          max: 2
+        EMERALD:
+          weight: 6
+          min: 1
+          max: 1
+        DIAMOND:
+          weight: 2
+          min: 1
+          max: 1
 
   # ----- Logout dummies (CombatLogX-style) ---------------------------------
   # If a player disconnects during night in a managed world, a dummy

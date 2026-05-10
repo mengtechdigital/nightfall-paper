@@ -3,9 +3,11 @@ package com.nightfall;
 import com.nightfall.command.NightfallCommand;
 import com.nightfall.dummy.LogoutDummyManager;
 import com.nightfall.listener.LogoutDummyListener;
+import com.nightfall.listener.MobDeathListener;
 import com.nightfall.listener.NightMobListener;
 import com.nightfall.listener.SleepBlocker;
 import com.nightfall.spawn.ExtraSpawnTask;
+import com.nightfall.spawn.JumperZombieTask;
 import com.nightfall.time.TimeController;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,6 +20,7 @@ public final class NightfallPlugin extends JavaPlugin {
     private NightMobListener nightMobListener;
     private LogoutDummyManager dummyManager;
     private ExtraSpawnTask extraSpawnTask;
+    private JumperZombieTask jumperTask;
     private BukkitTask extraSpawnHandle;
 
     @Override
@@ -36,10 +39,13 @@ public final class NightfallPlugin extends JavaPlugin {
         this.dummyManager = new LogoutDummyManager(this, config, nightMobListener.buffedKey());
         this.dummyManager.reindexLiveDummies(); // amortize the post-restart scan to startup, not per-join
         this.extraSpawnTask = new ExtraSpawnTask(this, config);
+        this.jumperTask = new JumperZombieTask(this, config, nightMobListener.jumperKey());
+        this.jumperTask.start();
 
         getServer().getPluginManager().registerEvents(nightMobListener, this);
         getServer().getPluginManager().registerEvents(new SleepBlocker(config), this);
         getServer().getPluginManager().registerEvents(new LogoutDummyListener(dummyManager), this);
+        getServer().getPluginManager().registerEvents(new MobDeathListener(config, nightMobListener.buffedKey()), this);
 
         rescheduleExtraSpawnTask();
 
@@ -63,6 +69,9 @@ public final class NightfallPlugin extends JavaPlugin {
         }
         if (timeController != null) {
             timeController.cancel();
+        }
+        if (jumperTask != null) {
+            jumperTask.cancel();
         }
         if (dummyManager != null) {
             dummyManager.shutdown();

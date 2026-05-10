@@ -1,5 +1,6 @@
 package com.nightfall;
 
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
@@ -34,11 +35,36 @@ public final class NightfallConfig {
     private int runnerSpeedAmp;
     private String runnerName;
 
+    private double jumperChance;
+    private int jumperJumpAmp;
+    private String jumperName;
+
     private boolean forceZombieDoorBreak;
 
     private boolean mobBuffEnabled;
     private double mobHealthMultiplier;
     private double mobAttackMultiplier;
+
+    private boolean chargedCreeperEnabled;
+    private double chargedCreeperChance;
+
+    private boolean stormBuffEnabled;
+    private double stormHealthMultiplier;
+    private double stormAttackMultiplier;
+
+    private boolean distanceScalingEnabled;
+    private boolean distanceScalingUseWorldSpawn;
+    private double distanceScalingStart;
+    private double distanceScalingMax;
+    private double distanceScalingHealthMultiplier;
+    private double distanceScalingAttackMultiplier;
+
+    private double lootXpMultiplier;
+    private boolean extraLootEnabled;
+    private double extraLootChance;
+    private double extraLootStormBonus;
+    private List<LootEntry> lootEntries;
+    private int lootTotalWeight;
 
     private boolean dummyEnabled;
     private String dummyName;
@@ -69,21 +95,76 @@ public final class NightfallConfig {
 
         // Clamp to a sane minimum so we never divide by ~zero.
         this.dayMinutes   = Math.max(0.5, c.getDouble("day-length-minutes",   30.0));
-        this.nightMinutes = Math.max(0.5, c.getDouble("night-length-minutes",  3.0));
+        this.nightMinutes = Math.max(0.5, c.getDouble("night-length-minutes",  6.0));
 
         this.preventNightSkip = c.getBoolean("prevent-night-skip", true);
         this.sleepSkipBlockedMessage = c.getString("sleep-skip-blocked-message",
                 "&8&oThe night refuses to end.");
 
-        this.runnerChance    = clamp(c.getDouble("night.runner-chance", 0.30), 0.0, 1.0);
+        this.runnerChance    = clamp(c.getDouble("night.runner-chance", 0.35), 0.0, 1.0);
         this.runnerSpeedAmp  = Math.max(0, c.getInt("night.runner-speed-amplifier", 1));
         this.runnerName      = c.getString("night.runner-name", "&cRunner");
+
+        this.jumperChance    = clamp(c.getDouble("night.jumper-chance", 0.25), 0.0, 1.0);
+        this.jumperJumpAmp   = Math.max(0, c.getInt("night.jumper-jump-amplifier", 2));
+        this.jumperName      = c.getString("night.jumper-name", "&2Jumper");
 
         this.forceZombieDoorBreak = c.getBoolean("night.force-zombie-door-break", true);
 
         this.mobBuffEnabled       = c.getBoolean("night.mob-buff.enabled", true);
-        this.mobHealthMultiplier  = Math.max(0.1, c.getDouble("night.mob-buff.max-health-multiplier", 1.5));
-        this.mobAttackMultiplier  = Math.max(0.1, c.getDouble("night.mob-buff.attack-damage-multiplier", 1.4));
+        this.mobHealthMultiplier  = Math.max(0.1, c.getDouble("night.mob-buff.max-health-multiplier", 2.0));
+        this.mobAttackMultiplier  = Math.max(0.1, c.getDouble("night.mob-buff.attack-damage-multiplier", 1.6));
+
+        this.chargedCreeperEnabled = c.getBoolean("night.charged-creeper.enabled", true);
+        this.chargedCreeperChance  = clamp(c.getDouble("night.charged-creeper.chance", 0.60), 0.0, 1.0);
+
+        this.stormBuffEnabled      = c.getBoolean("night.storm-buff.enabled", true);
+        this.stormHealthMultiplier = Math.max(0.1, c.getDouble("night.storm-buff.max-health-multiplier", 1.25));
+        this.stormAttackMultiplier = Math.max(0.1, c.getDouble("night.storm-buff.attack-damage-multiplier", 1.15));
+
+        ConfigurationSection dist = c.getConfigurationSection("night.distance-scaling");
+        this.distanceScalingEnabled        = dist != null && dist.getBoolean("enabled", true);
+        this.distanceScalingUseWorldSpawn   = dist != null && dist.getBoolean("use-world-spawn", true);
+        this.distanceScalingStart           = Math.max(0, dist != null ? dist.getDouble("start-distance", 500.0) : 500.0);
+        this.distanceScalingMax             = Math.max(this.distanceScalingStart + 1,
+                                                        dist != null ? dist.getDouble("max-distance", 5000.0) : 5000.0);
+        this.distanceScalingHealthMultiplier = Math.max(1.0, dist != null ? dist.getDouble("max-health-multiplier", 2.0) : 2.0);
+        this.distanceScalingAttackMultiplier = Math.max(1.0, dist != null ? dist.getDouble("attack-damage-multiplier", 1.5) : 1.5);
+
+        ConfigurationSection loot = c.getConfigurationSection("night.loot");
+        this.lootXpMultiplier      = Math.max(1.0, loot != null ? loot.getDouble("xp-multiplier", 2.0) : 2.0);
+        ConfigurationSection extraLoot = loot != null ? loot.getConfigurationSection("extra-loot") : null;
+        this.extraLootEnabled       = extraLoot != null && extraLoot.getBoolean("enabled", true);
+        this.extraLootChance        = clamp(extraLoot != null ? extraLoot.getDouble("base-chance", 0.20) : 0.20, 0.0, 1.0);
+        this.extraLootStormBonus    = clamp(extraLoot != null ? extraLoot.getDouble("storm-bonus", 0.15) : 0.15, 0.0, 1.0);
+        this.lootEntries = new ArrayList<>();
+        this.lootTotalWeight = 0;
+        ConfigurationSection drops = extraLoot != null ? extraLoot.getConfigurationSection("drops") : null;
+        if (drops != null) {
+            for (String key : drops.getKeys(false)) {
+                Material mat = Material.matchMaterial(key.trim().toUpperCase(Locale.ROOT));
+                if (mat == null || !mat.isItem()) {
+                    plugin.getLogger().warning("Unknown or non-item Material in night.loot.extra-loot.drops: " + key);
+                    continue;
+                }
+                ConfigurationSection itemSec = drops.getConfigurationSection(key);
+                if (itemSec == null) continue;
+                int weight = itemSec.getInt("weight", 0);
+                if (weight <= 0) continue;
+                int min = Math.max(1, itemSec.getInt("min", 1));
+                int max = Math.max(min, itemSec.getInt("max", 1));
+                this.lootEntries.add(new LootEntry(mat, weight, min, max));
+                this.lootTotalWeight += weight;
+            }
+        }
+        if (this.lootEntries.isEmpty()) {
+            // Sensible fallback so misconfiguration doesn't silently disable drops.
+            this.lootEntries.add(new LootEntry(Material.IRON_NUGGET, 30, 1, 3));
+            this.lootEntries.add(new LootEntry(Material.ARROW, 25, 2, 4));
+            this.lootEntries.add(new LootEntry(Material.GOLD_NUGGET, 15, 1, 2));
+            this.lootEntries.add(new LootEntry(Material.EMERALD, 6, 1, 1));
+            this.lootTotalWeight = 76;
+        }
 
         this.dummyEnabled        = c.getBoolean("night.logout-dummy.enabled", true);
         this.dummyName           = c.getString("night.logout-dummy.name", "&7&o{player} (sleeping)");
@@ -149,11 +230,36 @@ public final class NightfallConfig {
     public int runnerSpeedAmp()     { return runnerSpeedAmp; }
     public String runnerName()      { return runnerName; }
 
+    public double jumperChance()    { return jumperChance; }
+    public int jumperJumpAmp()      { return jumperJumpAmp; }
+    public String jumperName()      { return jumperName; }
+
     public boolean forceZombieDoorBreak() { return forceZombieDoorBreak; }
 
     public boolean mobBuffEnabled()        { return mobBuffEnabled; }
     public double mobHealthMultiplier()    { return mobHealthMultiplier; }
     public double mobAttackMultiplier()    { return mobAttackMultiplier; }
+
+    public boolean chargedCreeperEnabled() { return chargedCreeperEnabled; }
+    public double chargedCreeperChance()   { return chargedCreeperChance; }
+
+    public boolean stormBuffEnabled()        { return stormBuffEnabled; }
+    public double stormHealthMultiplier()    { return stormHealthMultiplier; }
+    public double stormAttackMultiplier()    { return stormAttackMultiplier; }
+
+    public boolean distanceScalingEnabled()          { return distanceScalingEnabled; }
+    public boolean distanceScalingUseWorldSpawn()    { return distanceScalingUseWorldSpawn; }
+    public double distanceScalingStart()             { return distanceScalingStart; }
+    public double distanceScalingMax()               { return distanceScalingMax; }
+    public double distanceScalingHealthMultiplier()  { return distanceScalingHealthMultiplier; }
+    public double distanceScalingAttackMultiplier()  { return distanceScalingAttackMultiplier; }
+
+    public double lootXpMultiplier()         { return lootXpMultiplier; }
+    public boolean extraLootEnabled()        { return extraLootEnabled; }
+    public double extraLootChance()          { return extraLootChance; }
+    public double extraLootStormBonus()      { return extraLootStormBonus; }
+    public List<LootEntry> lootEntries()     { return lootEntries; }
+    public int lootTotalWeight()             { return lootTotalWeight; }
 
     public boolean dummyEnabled()       { return dummyEnabled; }
     public String dummyName()           { return dummyName; }
@@ -171,5 +277,19 @@ public final class NightfallConfig {
 
     public String message(String key, String fallback) {
         return root.getString("messages." + key, fallback);
+    }
+
+    public static final class LootEntry {
+        public final Material material;
+        public final int weight;
+        public final int minAmount;
+        public final int maxAmount;
+
+        public LootEntry(Material material, int weight, int minAmount, int maxAmount) {
+            this.material = material;
+            this.weight = weight;
+            this.minAmount = minAmount;
+            this.maxAmount = maxAmount;
+        }
     }
 }
