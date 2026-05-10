@@ -8,7 +8,7 @@ worlds:
 
 # Real-time minutes for each phase. Vanilla defaults to 10/10.
 day-length-minutes: 30.0
-night-length-minutes: 12.0
+night-length-minutes: 10.0
 
 # Cancel TimeSkipEvent (NIGHT_SKIP). Players may still enter beds — that
 # sets their respawn point — but the night will not skip.
