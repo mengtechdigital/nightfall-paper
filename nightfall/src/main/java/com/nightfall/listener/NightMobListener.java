@@ -13,12 +13,22 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Drowned;
+import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Husk;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
+import org.bukkit.entity.Phantom;
+import org.bukkit.entity.Pillager;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Spider;
+import org.bukkit.entity.Stray;
+import org.bukkit.entity.Vindicator;
+import org.bukkit.entity.Witch;
+import org.bukkit.entity.WitherSkeleton;
 import org.bukkit.entity.Zombie;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -78,6 +88,28 @@ public final class NightMobListener implements Listener {
     private final NamespacedKey stormAtkModKey;
     private final NamespacedKey distHpModKey;
     private final NamespacedKey distAtkModKey;
+    /** Variant tracking keys. */
+    private final NamespacedKey marksmanKey;
+    private final NamespacedKey desertKey;
+    private final NamespacedKey venomousKey;
+    private final NamespacedKey witchDoctorKey;
+    private final NamespacedKey bruteKey;
+    private final NamespacedKey witherReaperKey;
+    private final NamespacedKey frozenKey;
+    private final NamespacedKey enderStalkerKey;
+    private final NamespacedKey plagueKey;
+    private final NamespacedKey berserkerKey;
+    private final NamespacedKey phantomDiverKey;
+    private final NamespacedKey pillagerSniperKey;
+    private final NamespacedKey siegeKey;
+    private final NamespacedKey flashCreeperKey;
+    private final NamespacedKey splitterCreeperKey;
+    private final NamespacedKey volatileCreeperKey;
+    private final NamespacedKey webWeaverKey;
+    private final NamespacedKey pyroSkeletonKey;
+    private final NamespacedKey bomberSkeletonKey;
+    private final NamespacedKey blazeArcherKey;
+    private final NamespacedKey swarmZombieKey;
 
     public NightMobListener(Plugin plugin, NightfallConfig config) {
         this.config = config;
@@ -91,6 +123,27 @@ public final class NightMobListener implements Listener {
         this.stormAtkModKey = new NamespacedKey(plugin, "nf_storm_atk");
         this.distHpModKey   = new NamespacedKey(plugin, "nf_dist_hp");
         this.distAtkModKey  = new NamespacedKey(plugin, "nf_dist_atk");
+        this.marksmanKey    = new NamespacedKey(plugin, "marksman");
+        this.desertKey      = new NamespacedKey(plugin, "desert");
+        this.venomousKey    = new NamespacedKey(plugin, "venomous");
+        this.witchDoctorKey = new NamespacedKey(plugin, "witch_doctor");
+        this.bruteKey       = new NamespacedKey(plugin, "brute");
+        this.witherReaperKey = new NamespacedKey(plugin, "wither_reaper");
+        this.frozenKey      = new NamespacedKey(plugin, "frozen");
+        this.enderStalkerKey = new NamespacedKey(plugin, "ender_stalker");
+        this.plagueKey      = new NamespacedKey(plugin, "plague");
+        this.berserkerKey   = new NamespacedKey(plugin, "berserker");
+        this.phantomDiverKey = new NamespacedKey(plugin, "phantom_diver");
+        this.pillagerSniperKey = new NamespacedKey(plugin, "pillager_sniper");
+        this.siegeKey        = new NamespacedKey(plugin, "siege");
+        this.flashCreeperKey = new NamespacedKey(plugin, "flash_creeper");
+        this.splitterCreeperKey = new NamespacedKey(plugin, "splitter_creeper");
+        this.volatileCreeperKey = new NamespacedKey(plugin, "volatile_creeper");
+        this.webWeaverKey    = new NamespacedKey(plugin, "web_weaver");
+        this.pyroSkeletonKey = new NamespacedKey(plugin, "pyro_skeleton");
+        this.bomberSkeletonKey = new NamespacedKey(plugin, "bomber_skeleton");
+        this.blazeArcherKey  = new NamespacedKey(plugin, "blaze_archer");
+        this.swarmZombieKey  = new NamespacedKey(plugin, "swarm_zombie");
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -147,6 +200,11 @@ public final class NightMobListener implements Listener {
         // Skeleton follow range + night vision so they snipe from further.
         if (entity instanceof Skeleton skeleton) {
             applySkeletonBoost(skeleton);
+        }
+
+        // ---- New mob variants ----
+        if (config.mobVariantsEnabled()) {
+            applyMobVariants(entity, isStormy);
         }
 
         // Stat buffs apply to all hostile Monsters.
@@ -286,6 +344,278 @@ public final class NightMobListener implements Listener {
         }
     }
 
+    private void applyMobVariants(LivingEntity entity, boolean isStormy) {
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+
+        // 1. Skeleton Marksman — during thunderstorms
+        if (isStormy && entity instanceof Skeleton s) {
+            NightfallConfig.VariantEntry v = config.variant("skeleton-marksman");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(marksmanKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
+                s.addPotionEffect(speed);
+                AttributeInstance follow = s.getAttribute(Attribute.GENERIC_FOLLOW_RANGE);
+                if (follow != null && follow.getBaseValue() < 64.0) follow.setBaseValue(64.0);
+                name(entity, v.name);
+            }
+        }
+
+        // 2. Desert Zombie — Husks only
+        if (entity instanceof Husk h) {
+            NightfallConfig.VariantEntry v = config.variant("desert-zombie");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(desertKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect fireRes = new PotionEffect(PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, false, false, false);
+                h.addPotionEffect(fireRes);
+                name(entity, v.name);
+            }
+        }
+
+        // 3. Venomous Spider
+        if (entity instanceof Spider s) {
+            NightfallConfig.VariantEntry v = config.variant("venomous-spider");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(venomousKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
+                s.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 4. Witch Doctor
+        if (entity instanceof Witch w) {
+            NightfallConfig.VariantEntry v = config.variant("witch-doctor");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(witchDoctorKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
+                w.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 5. Brute Creeper
+        if (entity instanceof Creeper c) {
+            NightfallConfig.VariantEntry v = config.variant("brute-creeper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(bruteKey, PersistentDataType.BYTE, (byte) 1);
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                c.setExplosionRadius(5);
+                c.setFuseTicks(20);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
+                c.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 6. Wither Reaper
+        if (entity instanceof WitherSkeleton ws) {
+            NightfallConfig.VariantEntry v = config.variant("wither-reaper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(witherReaperKey, PersistentDataType.BYTE, (byte) 1);
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                applyAttributeBoost(ws, Attribute.GENERIC_ATTACK_DAMAGE, 0.40, witherReaperKey);
+                name(entity, v.name);
+            }
+        }
+
+        // 7. Frozen Stray
+        if (entity instanceof Stray st) {
+            NightfallConfig.VariantEntry v = config.variant("frozen-stray");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(frozenKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect resist = new PotionEffect(PotionEffectType.RESISTANCE, Integer.MAX_VALUE, 0, false, false, false);
+                st.addPotionEffect(resist);
+                applyAttributeBoost(st, Attribute.GENERIC_MAX_HEALTH, 0.50, frozenKey);
+                AttributeInstance hp = st.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+                if (hp != null) st.setHealth(hp.getValue());
+                name(entity, v.name);
+            }
+        }
+
+        // 8. Ender Stalker
+        if (entity instanceof Enderman em) {
+            NightfallConfig.VariantEntry v = config.variant("ender-stalker");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(enderStalkerKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
+                em.addPotionEffect(speed);
+                AttributeInstance follow = em.getAttribute(Attribute.GENERIC_FOLLOW_RANGE);
+                if (follow != null && follow.getBaseValue() < 60.0) follow.setBaseValue(60.0);
+                name(entity, v.name);
+            }
+        }
+
+        // 9. Plague Zombie — plain zombies only (no husk/drowned)
+        if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
+            NightfallConfig.VariantEntry v = config.variant("plague-zombie");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(plagueKey, PersistentDataType.BYTE, (byte) 1);
+                // Slow themselves down but infect on hit
+                PotionEffect slow = new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 0, false, false, false);
+                z.addPotionEffect(slow);
+                name(entity, v.name);
+            }
+        }
+
+        // 10. Vindicator Berserker
+        if (entity instanceof Vindicator vin) {
+            NightfallConfig.VariantEntry v = config.variant("vindicator-berserker");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(berserkerKey, PersistentDataType.BYTE, (byte) 1);
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+            }
+        }
+
+        // 11. Phantom Diver
+        if (entity instanceof Phantom ph) {
+            NightfallConfig.VariantEntry v = config.variant("phantom-diver");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(phantomDiverKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
+                ph.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 12. Pillager Sniper
+        if (entity instanceof Pillager p) {
+            NightfallConfig.VariantEntry v = config.variant("pillager-sniper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(pillagerSniperKey, PersistentDataType.BYTE, (byte) 1);
+                AttributeInstance follow = p.getAttribute(Attribute.GENERIC_FOLLOW_RANGE);
+                if (follow != null && follow.getBaseValue() < 80.0) follow.setBaseValue(80.0);
+                EntityEquipment eq = p.getEquipment();
+                if (eq != null) {
+                    ItemStack crossbow = new ItemStack(org.bukkit.Material.CROSSBOW);
+                    ItemMeta meta = crossbow.getItemMeta();
+                    if (meta != null) {
+                        meta.addEnchant(org.bukkit.enchantments.Enchantment.QUICK_CHARGE, 3, true);
+                        meta.addEnchant(org.bukkit.enchantments.Enchantment.PIERCING, 2, true);
+                        crossbow.setItemMeta(meta);
+                    }
+                    eq.setItemInMainHand(crossbow);
+                    eq.setItemInMainHandDropChance(0.0f);
+                }
+                name(entity, v.name);
+            }
+        }
+
+        // 13. Siege Zombie — plain zombies only
+        if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
+            NightfallConfig.VariantEntry v = config.variant("siege-zombie");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
+                z.addPotionEffect(speed);
+                applyAttributeBoost(z, Attribute.GENERIC_ATTACK_DAMAGE, 0.25, siegeKey);
+                name(entity, v.name);
+            }
+        }
+
+        // 14. Flash Creeper — nearly instant boom
+        if (entity instanceof Creeper c) {
+            NightfallConfig.VariantEntry v = config.variant("flash-creeper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(flashCreeperKey, PersistentDataType.BYTE, (byte) 1);
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                c.setFuseTicks(5);   // 0.25 s — impossible to kite
+                c.setExplosionRadius(3);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 2, false, false, false);
+                c.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 15. Splitter Creeper
+        if (entity instanceof Creeper c) {
+            NightfallConfig.VariantEntry v = config.variant("splitter-creeper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(splitterCreeperKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+            }
+        }
+
+        // 16. Volatile Creeper — explodes on death
+        if (entity instanceof Creeper c) {
+            NightfallConfig.VariantEntry v = config.variant("volatile-creeper");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(volatileCreeperKey, PersistentDataType.BYTE, (byte) 1);
+                entity.getPersistentDataContainer().set(siegeKey, PersistentDataType.BYTE, (byte) 1);
+                c.setExplosionRadius(4);
+                name(entity, v.name);
+            }
+        }
+
+        // 17. Web Weaver — spider variant
+        if (entity instanceof Spider s) {
+            NightfallConfig.VariantEntry v = config.variant("web-weaver");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(webWeaverKey, PersistentDataType.BYTE, (byte) 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 1, false, false, false);
+                s.addPotionEffect(speed);
+                name(entity, v.name);
+            }
+        }
+
+        // 18. Pyro Skeleton
+        if (entity instanceof Skeleton s) {
+            NightfallConfig.VariantEntry v = config.variant("pyro-skeleton");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(pyroSkeletonKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+            }
+        }
+
+        // 19. Bomber Skeleton
+        if (entity instanceof Skeleton s) {
+            NightfallConfig.VariantEntry v = config.variant("bomber-skeleton");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(bomberSkeletonKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+            }
+        }
+
+        // 20. Blaze Archer
+        if (entity instanceof Skeleton s) {
+            NightfallConfig.VariantEntry v = config.variant("blaze-archer");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(blazeArcherKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+            }
+        }
+
+        // 21. Swarm Zombie — spawns multiple zombies at once
+        if (entity instanceof Zombie z && !(z instanceof Husk) && !(z instanceof Drowned)) {
+            NightfallConfig.VariantEntry v = config.variant("swarm-zombie");
+            if (v != null && v.enabled && rng.nextDouble() < v.chance) {
+                entity.getPersistentDataContainer().set(swarmZombieKey, PersistentDataType.BYTE, (byte) 1);
+                name(entity, v.name);
+                // Spawn 2-4 additional zombies nearby (they will trigger CreatureSpawnEvent with CUSTOM reason)
+                World w = z.getWorld();
+                Location origin = z.getLocation();
+                int extras = 2 + rng.nextInt(3); // 2 to 4
+                for (int i = 0; i < extras; i++) {
+                    double ox = (rng.nextDouble() - 0.5) * 3.0;
+                    double oz = (rng.nextDouble() - 0.5) * 3.0;
+                    Location spawnLoc = origin.clone().add(ox, 0.5, oz);
+                    w.spawn(spawnLoc, Zombie.class, CreatureSpawnEvent.SpawnReason.CUSTOM, null);
+                }
+            }
+        }
+    }
+
+    private void name(LivingEntity entity, String name) {
+        if (name == null || name.isEmpty()) return;
+        Component existing = entity.customName();
+        if (existing != null) {
+            entity.customName(existing.append(Component.text(Text.color(" &r" + name))));
+        } else {
+            entity.customName(Component.text(Text.color(name)));
+        }
+        entity.setCustomNameVisible(false);
+    }
+
     /**
      * Adds a MULTIPLY_SCALAR_1 modifier to the given attribute. Operation
      * semantics: {@code final = base * (1 + sum(modifiers))}. So passing
@@ -324,4 +654,26 @@ public final class NightMobListener implements Listener {
     public NamespacedKey runnerKey() { return runnerKey; }
     public NamespacedKey jumperKey() { return jumperKey; }
     public NamespacedKey buffedKey() { return buffedKey; }
+
+    public NamespacedKey marksmanKey()    { return marksmanKey; }
+    public NamespacedKey desertKey()      { return desertKey; }
+    public NamespacedKey venomousKey()    { return venomousKey; }
+    public NamespacedKey witchDoctorKey() { return witchDoctorKey; }
+    public NamespacedKey bruteKey()       { return bruteKey; }
+    public NamespacedKey witherReaperKey(){ return witherReaperKey; }
+    public NamespacedKey frozenKey()      { return frozenKey; }
+    public NamespacedKey enderStalkerKey(){ return enderStalkerKey; }
+    public NamespacedKey plagueKey()      { return plagueKey; }
+    public NamespacedKey berserkerKey()   { return berserkerKey; }
+    public NamespacedKey phantomDiverKey(){ return phantomDiverKey; }
+    public NamespacedKey pillagerSniperKey(){ return pillagerSniperKey; }
+    public NamespacedKey siegeKey()         { return siegeKey; }
+    public NamespacedKey flashCreeperKey()  { return flashCreeperKey; }
+    public NamespacedKey splitterCreeperKey(){ return splitterCreeperKey; }
+    public NamespacedKey volatileCreeperKey(){ return volatileCreeperKey; }
+    public NamespacedKey webWeaverKey()     { return webWeaverKey; }
+    public NamespacedKey pyroSkeletonKey()  { return pyroSkeletonKey; }
+    public NamespacedKey bomberSkeletonKey(){ return bomberSkeletonKey; }
+    public NamespacedKey blazeArcherKey()   { return blazeArcherKey; }
+    public NamespacedKey swarmZombieKey()   { return swarmZombieKey; }
 }

@@ -8,6 +8,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -87,6 +88,9 @@ public final class NightfallConfig {
     private int extraMaxDistance;
     private boolean extraRequireDarkness;
     private LinkedHashMap<EntityType, Integer> extraMobWeights;
+
+    private boolean mobVariantsEnabled;
+    private final Map<String, VariantEntry> variants = new HashMap<>();
 
     private FileConfiguration root;
 
@@ -220,6 +224,66 @@ public final class NightfallConfig {
             this.extraMobWeights.put(EntityType.SPIDER, 2);
             this.extraMobWeights.put(EntityType.CREEPER, 1);
         }
+
+        ConfigurationSection mv = c.getConfigurationSection("night.mob-variants");
+        this.mobVariantsEnabled = mv != null && mv.getBoolean("enabled", true);
+        if (mv != null) {
+            for (String key : mv.getKeys(false)) {
+                if ("enabled".equals(key)) continue;
+                ConfigurationSection vs = mv.getConfigurationSection(key);
+                if (vs == null) continue;
+                boolean venabled = vs.getBoolean("enabled", true);
+                double vchance = clamp(vs.getDouble("chance", 0.15), 0.0, 1.0);
+                String vname = vs.getString("name", "&e" + titleCase(key));
+                variants.put(key, new VariantEntry(venabled, vchance, vname));
+            }
+        }
+        ensureVariant("skeleton-marksman", 0.15, "&bSkeleton Marksman");
+        ensureVariant("desert-zombie",     0.20, "&6Desert Zombie");
+        ensureVariant("venomous-spider",   0.20, "&2Venomous Spider");
+        ensureVariant("witch-doctor",      0.15, "&5Witch Doctor");
+        ensureVariant("brute-creeper",     0.15, "&4Brute Creeper");
+        ensureVariant("wither-reaper",     0.15, "&8Wither Reaper");
+        ensureVariant("frozen-stray",      0.20, "&3Frozen Stray");
+        ensureVariant("ender-stalker",     0.12, "&5Ender Stalker");
+        ensureVariant("plague-zombie",     0.18, "&aPlague Zombie");
+        ensureVariant("vindicator-berserker", 0.15, "&cVindicator Berserker");
+        ensureVariant("phantom-diver",     0.20, "&9Phantom Diver");
+        ensureVariant("pillager-sniper",   0.15, "&7Pillager Sniper");
+
+        // Siege & advanced variants
+        ensureVariant("siege-zombie",      0.12, "&4Siege Zombie");
+        ensureVariant("flash-creeper",     0.10, "&cFlash Creeper");
+        ensureVariant("splitter-creeper",  0.10, "&eSplitter Creeper");
+        ensureVariant("volatile-creeper",  0.08, "&8Volatile Creeper");
+        ensureVariant("web-weaver",        0.12, "&8Web Weaver");
+        ensureVariant("pyro-skeleton",     0.10, "&6Pyro Skeleton");
+        ensureVariant("bomber-skeleton",   0.10, "&cBomber Skeleton");
+        ensureVariant("blaze-archer",      0.08, "&eBlaze Archer");
+        ensureVariant("swarm-zombie",      0.10, "&2Swarm Zombie");
+    }
+
+    private void ensureVariant(String key, double defaultChance, String defaultName) {
+        if (!variants.containsKey(key)) {
+            variants.put(key, new VariantEntry(true, defaultChance, defaultName));
+        }
+    }
+
+    private static String titleCase(String kebab) {
+        StringBuilder sb = new StringBuilder();
+        boolean upper = true;
+        for (char c : kebab.toCharArray()) {
+            if (c == '-') {
+                sb.append(' ');
+                upper = true;
+            } else if (upper) {
+                sb.append(Character.toUpperCase(c));
+                upper = false;
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private static EntityType parseEntityType(String name) {
@@ -300,6 +364,9 @@ public final class NightfallConfig {
     public boolean extraRequireDarkness()              { return extraRequireDarkness; }
     public Map<EntityType, Integer> extraMobWeights()  { return extraMobWeights; }
 
+    public boolean mobVariantsEnabled() { return mobVariantsEnabled; }
+    public VariantEntry variant(String key) { return variants.get(key); }
+
     public String message(String key, String fallback) {
         return root.getString("messages." + key, fallback);
     }
@@ -315,6 +382,18 @@ public final class NightfallConfig {
             this.weight = weight;
             this.minAmount = minAmount;
             this.maxAmount = maxAmount;
+        }
+    }
+
+    public static final class VariantEntry {
+        public final boolean enabled;
+        public final double chance;
+        public final String name;
+
+        public VariantEntry(boolean enabled, double chance, String name) {
+            this.enabled = enabled;
+            this.chance = chance;
+            this.name = name;
         }
     }
 }

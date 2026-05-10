@@ -2,6 +2,7 @@ package com.nightfall.command;
 
 import com.nightfall.NightfallConfig;
 import com.nightfall.NightfallPlugin;
+import com.nightfall.gui.MobVariantsGui;
 import com.nightfall.spawn.ExtraSpawnTask;
 import com.nightfall.time.TimeController;
 import com.nightfall.util.Text;
@@ -25,7 +26,7 @@ import java.util.Locale;
  */
 public final class NightfallCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("reload", "status", "day", "night");
+    private static final List<String> SUBS = List.of("reload", "status", "day", "night", "mobs");
 
     private final NightfallPlugin plugin;
     private final NightfallConfig config;
@@ -58,7 +59,8 @@ public final class NightfallCommand implements CommandExecutor, TabCompleter {
             case "status" -> runStatus(sender, args);
             case "day"    -> runForce(sender, args, /* isNight */ false);
             case "night"  -> runForce(sender, args, /* isNight */ true);
-            default       -> send(sender, null, "&7Usage: /nightfall <reload|status|day|night>");
+            case "mobs"   -> runMobs(sender);
+            default       -> send(sender, null, "&7Usage: /nightfall <reload|status|day|night|mobs>");
         }
         return true;
     }
@@ -101,6 +103,14 @@ public final class NightfallCommand implements CommandExecutor, TabCompleter {
         send(sender, isNight ? "forced-night" : "forced-day",
                 isNight ? "&eForced night in &f{world}&e." : "&eForced day in &f{world}&e.",
                 "{world}", w.getName());
+    }
+
+    private void runMobs(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            send(sender, null, "&cOnly players can open the mob variants GUI.");
+            return;
+        }
+        new MobVariantsGui(config).open(player);
     }
 
     /**
@@ -147,7 +157,8 @@ public final class NightfallCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("status")
                 || args[0].equalsIgnoreCase("day")
-                || args[0].equalsIgnoreCase("night"))) {
+                || args[0].equalsIgnoreCase("night")
+                || args[0].equalsIgnoreCase("mobs"))) {
             String prefix = args[1].toLowerCase(Locale.ROOT);
             List<String> out = new ArrayList<>();
             for (World w : Bukkit.getWorlds()) {

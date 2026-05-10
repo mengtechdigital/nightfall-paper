@@ -151,6 +151,97 @@ night:
     drop-inventory-on-kill: true
     clear-xp-on-kill: true
 
+  # ----- Mob Variants ------------------------------------------------------
+  # Special themed hostile variants that spawn at night with unique
+  # abilities, on-hit effects, and behaviours. Each variant has its own
+  # spawn chance (rolled independently when the base mob type spawns).
+  mob-variants:
+    enabled: true
+    skeleton-marksman:
+      enabled: true
+      chance: 0.15
+      name: "&bSkeleton Marksman"
+    desert-zombie:
+      enabled: true
+      chance: 0.20
+      name: "&6Desert Zombie"
+    venomous-spider:
+      enabled: true
+      chance: 0.20
+      name: "&2Venomous Spider"
+    witch-doctor:
+      enabled: true
+      chance: 0.15
+      name: "&5Witch Doctor"
+    brute-creeper:
+      enabled: true
+      chance: 0.15
+      name: "&4Brute Creeper"
+    wither-reaper:
+      enabled: true
+      chance: 0.15
+      name: "&8Wither Reaper"
+    frozen-stray:
+      enabled: true
+      chance: 0.20
+      name: "&3Frozen Stray"
+    ender-stalker:
+      enabled: true
+      chance: 0.12
+      name: "&5Ender Stalker"
+    plague-zombie:
+      enabled: true
+      chance: 0.18
+      name: "&aPlague Zombie"
+    vindicator-berserker:
+      enabled: true
+      chance: 0.15
+      name: "&cVindicator Berserker"
+    phantom-diver:
+      enabled: true
+      chance: 0.20
+      name: "&9Phantom Diver"
+    pillager-sniper:
+      enabled: true
+      chance: 0.15
+      name: "&7Pillager Sniper"
+    siege-zombie:
+      enabled: true
+      chance: 0.12
+      name: "&4Siege Zombie"
+    flash-creeper:
+      enabled: true
+      chance: 0.10
+      name: "&cFlash Creeper"
+    splitter-creeper:
+      enabled: true
+      chance: 0.10
+      name: "&eSplitter Creeper"
+    volatile-creeper:
+      enabled: true
+      chance: 0.08
+      name: "&8Volatile Creeper"
+    web-weaver:
+      enabled: true
+      chance: 0.12
+      name: "&8Web Weaver"
+    pyro-skeleton:
+      enabled: true
+      chance: 0.10
+      name: "&6Pyro Skeleton"
+    bomber-skeleton:
+      enabled: true
+      chance: 0.10
+      name: "&cBomber Skeleton"
+    blaze-archer:
+      enabled: true
+      chance: 0.08
+      name: "&eBlaze Archer"
+    swarm-zombie:
+      enabled: true
+      chance: 0.10
+      name: "&2Swarm Zombie"
+
   # ----- Extra spawns ------------------------------------------------------
   # Periodically spawn additional hostile mobs near players during night.
   # This now acts as the PRIMARY spawn system when vanilla night spawns

@@ -8,7 +8,7 @@ author: Meng Tech LLC
 commands:
   nightfall:
     description: Nightfall day/night and threat controls.
-    usage: /nightfall <reload|status|day|night>
+    usage: /nightfall <reload|status|day|night|mobs>
     aliases: [nf]
 
 permissions:

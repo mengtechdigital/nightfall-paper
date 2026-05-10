@@ -2,13 +2,22 @@ package com.nightfall;
 
 import com.nightfall.command.NightfallCommand;
 import com.nightfall.dummy.LogoutDummyManager;
+import com.nightfall.gui.MobVariantsGuiListener;
 import com.nightfall.listener.LogoutDummyListener;
 import com.nightfall.listener.MobDeathListener;
+import com.nightfall.listener.MobDeathVariantListener;
+import com.nightfall.listener.MobVariantHitListener;
 import com.nightfall.listener.NightMobListener;
+import com.nightfall.listener.SkeletonProjectileListener;
 import com.nightfall.listener.SleepBlocker;
 import com.nightfall.listener.VanillaSpawnBlocker;
+import com.nightfall.spawn.EnderStalkerTask;
 import com.nightfall.spawn.ExtraSpawnTask;
 import com.nightfall.spawn.JumperZombieTask;
+import com.nightfall.spawn.MarksmanTask;
+import com.nightfall.spawn.MobSiegeTask;
+import com.nightfall.spawn.WebWeaverTask;
+import com.nightfall.spawn.WitchDoctorTask;
 import com.nightfall.time.TimeController;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,6 +31,11 @@ public final class NightfallPlugin extends JavaPlugin {
     private LogoutDummyManager dummyManager;
     private ExtraSpawnTask extraSpawnTask;
     private JumperZombieTask jumperTask;
+    private MarksmanTask marksmanTask;
+    private WitchDoctorTask witchDoctorTask;
+    private EnderStalkerTask enderStalkerTask;
+    private MobSiegeTask siegeTask;
+    private WebWeaverTask webWeaverTask;
     private BukkitTask extraSpawnHandle;
 
     @Override
@@ -42,12 +56,26 @@ public final class NightfallPlugin extends JavaPlugin {
         this.extraSpawnTask = new ExtraSpawnTask(this, config);
         this.jumperTask = new JumperZombieTask(this, config, nightMobListener.jumperKey());
         this.jumperTask.start();
+        this.marksmanTask = new MarksmanTask(this, config, nightMobListener.marksmanKey());
+        this.marksmanTask.start();
+        this.witchDoctorTask = new WitchDoctorTask(this, config, nightMobListener.witchDoctorKey());
+        this.witchDoctorTask.start();
+        this.enderStalkerTask = new EnderStalkerTask(this, config, nightMobListener.enderStalkerKey());
+        this.enderStalkerTask.start();
+        this.siegeTask = new MobSiegeTask(this, config, nightMobListener.siegeKey());
+        this.siegeTask.start();
+        this.webWeaverTask = new WebWeaverTask(this, config, nightMobListener.webWeaverKey());
+        this.webWeaverTask.start();
 
         getServer().getPluginManager().registerEvents(nightMobListener, this);
         getServer().getPluginManager().registerEvents(new SleepBlocker(config), this);
         getServer().getPluginManager().registerEvents(new LogoutDummyListener(dummyManager), this);
         getServer().getPluginManager().registerEvents(new MobDeathListener(config, nightMobListener.buffedKey()), this);
         getServer().getPluginManager().registerEvents(new VanillaSpawnBlocker(config), this);
+        getServer().getPluginManager().registerEvents(new MobVariantHitListener(config, nightMobListener), this);
+        getServer().getPluginManager().registerEvents(new SkeletonProjectileListener(config, nightMobListener), this);
+        getServer().getPluginManager().registerEvents(new MobDeathVariantListener(config, nightMobListener), this);
+        getServer().getPluginManager().registerEvents(new MobVariantsGuiListener(), this);
 
         rescheduleExtraSpawnTask();
 
@@ -74,6 +102,21 @@ public final class NightfallPlugin extends JavaPlugin {
         }
         if (jumperTask != null) {
             jumperTask.cancel();
+        }
+        if (marksmanTask != null) {
+            marksmanTask.cancel();
+        }
+        if (witchDoctorTask != null) {
+            witchDoctorTask.cancel();
+        }
+        if (enderStalkerTask != null) {
+            enderStalkerTask.cancel();
+        }
+        if (siegeTask != null) {
+            siegeTask.cancel();
+        }
+        if (webWeaverTask != null) {
+            webWeaverTask.cancel();
         }
         if (dummyManager != null) {
             dummyManager.shutdown();
