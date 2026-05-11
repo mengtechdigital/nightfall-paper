@@ -8,7 +8,7 @@ worlds:
 
 # Real-time minutes for each phase. Vanilla defaults to 10/10.
 day-length-minutes: 30.0
-night-length-minutes: 10.0
+night-length-minutes: 5.0
 
 # Cancel TimeSkipEvent (NIGHT_SKIP). Players may still enter beds — that
 # sets their respawn point — but the night will not skip.
@@ -86,7 +86,7 @@ night:
     base-chance: 0.15              # 15% at spawn
     chance-per-1000-blocks: 0.08   # +8% per 1k blocks from spawn
     allow-overlevel-enchants: true # allow above vanilla max levels
-    drop-chance: 0.08              # chance each gear piece drops on death
+    drop-chance: 0.22              # chance each gear piece drops on death
 
   # ----- Vanilla spawn blocker ---------------------------------------------
   # Cancels all vanilla NATURAL hostile mob spawns at night in managed
@@ -99,42 +99,74 @@ night:
   # Only mobs that were modified by Nightfall (natural night spawns and
   # extra spawns) give bonus loot — spawner-farm mobs are excluded.
   loot:
-    xp-multiplier: 2.0
+    xp-multiplier: 4.0
     extra-loot:
       enabled: true
-      base-chance: 0.20            # 20% chance for an extra drop
-      storm-bonus: 0.15            # +15% during rain/thunder (35% total)
+      base-chance: 0.45            # 45% chance for an extra drop
+      storm-bonus: 0.25            # +25% during rain/thunder (70% total)
       drops:
-        IRON_NUGGET:
-          weight: 30
-          min: 1
-          max: 3
-        ARROW:
+        IRON_INGOT:
           weight: 25
           min: 2
-          max: 4
-        BONE:
+          max: 5
+        COPPER_INGOT:
           weight: 20
-          min: 1
-          max: 2
-        GOLD_NUGGET:
+          min: 3
+          max: 6
+        ARROW:
+          weight: 20
+          min: 8
+          max: 16
+        REDSTONE:
+          weight: 18
+          min: 4
+          max: 8
+        GOLD_INGOT:
+          weight: 18
+          min: 2
+          max: 4
+        COAL:
           weight: 15
-          min: 1
-          max: 2
+          min: 3
+          max: 6
         LAPIS_LAZULI:
+          weight: 15
+          min: 3
+          max: 6
+        EXPERIENCE_BOTTLE:
+          weight: 12
+          min: 2
+          max: 4
+        EMERALD:
           weight: 12
           min: 1
           max: 3
         GLOWSTONE_DUST:
           weight: 10
+          min: 3
+          max: 6
+        DIAMOND:
+          weight: 8
           min: 1
           max: 2
-        EMERALD:
+        OBSIDIAN:
           weight: 6
           min: 1
+          max: 3
+        ENDER_PEARL:
+          weight: 6
+          min: 1
+          max: 2
+        BLAZE_ROD:
+          weight: 6
+          min: 1
+          max: 2
+        NAME_TAG:
+          weight: 3
+          min: 1
           max: 1
-        DIAMOND:
-          weight: 2
+        TOTEM_OF_UNDYING:
+          weight: 1
           min: 1
           max: 1
 

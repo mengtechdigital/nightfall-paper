@@ -119,7 +119,7 @@ public final class ExtraSpawnTask implements Runnable {
             }
 
             Entity spawned = w.spawnEntity(loc, type, CreatureSpawnEvent.SpawnReason.CUSTOM);
-            if (spawned == null) return false;
+            if (spawned == null || !spawned.isValid()) return false;
             spawned.getPersistentDataContainer().set(extraTag, PersistentDataType.BYTE, (byte) 1);
             return true;
         }

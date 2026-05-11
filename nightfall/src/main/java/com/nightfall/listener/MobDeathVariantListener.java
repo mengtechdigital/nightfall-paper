@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -53,7 +54,8 @@ public final class MobDeathVariantListener implements Listener {
                 double oz = (ThreadLocalRandom.current().nextDouble() - 0.5) * 2.0;
                 Location spawnLoc = loc.clone().add(ox, 0, oz);
                 // Use CUSTOM reason so NightMobListener buffs them if night
-                Creeper baby = (Creeper) w.spawnEntity(spawnLoc, EntityType.CREEPER);
+                Entity spawned = w.spawnEntity(spawnLoc, EntityType.CREEPER);
+                if (!(spawned instanceof Creeper baby)) continue;
                 // Make them smaller / faster by giving them a flash-creeper-like profile
                 baby.setExplosionRadius(2);
                 baby.setFuseTicks(15);

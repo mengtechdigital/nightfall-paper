@@ -109,7 +109,7 @@ public final class NightfallConfig {
 
         // Clamp to a sane minimum so we never divide by ~zero.
         this.dayMinutes   = Math.max(0.5, c.getDouble("day-length-minutes",   30.0));
-        this.nightMinutes = Math.max(0.5, c.getDouble("night-length-minutes",  6.0));
+        this.nightMinutes = Math.max(0.5, c.getDouble("night-length-minutes",  5.0));
 
         this.preventNightSkip = c.getBoolean("prevent-night-skip", true);
         this.sleepSkipBlockedMessage = c.getString("sleep-skip-blocked-message",
@@ -152,14 +152,14 @@ public final class NightfallConfig {
         this.mobGearBaseChance      = clamp(gear != null ? gear.getDouble("base-chance", 0.15) : 0.15, 0.0, 1.0);
         this.mobGearChancePer1000   = clamp(gear != null ? gear.getDouble("chance-per-1000-blocks", 0.08) : 0.08, 0.0, 1.0);
         this.mobGearAllowOverlevel  = gear != null && gear.getBoolean("allow-overlevel-enchants", true);
-        this.mobGearDropChance      = clamp(gear != null ? gear.getDouble("drop-chance", 0.08) : 0.08, 0.0, 1.0);
+        this.mobGearDropChance      = clamp(gear != null ? gear.getDouble("drop-chance", 0.22) : 0.22, 0.0, 1.0);
 
         ConfigurationSection loot = c.getConfigurationSection("night.loot");
-        this.lootXpMultiplier      = Math.max(1.0, loot != null ? loot.getDouble("xp-multiplier", 2.0) : 2.0);
+        this.lootXpMultiplier      = Math.max(1.0, loot != null ? loot.getDouble("xp-multiplier", 4.0) : 4.0);
         ConfigurationSection extraLoot = loot != null ? loot.getConfigurationSection("extra-loot") : null;
         this.extraLootEnabled       = extraLoot != null && extraLoot.getBoolean("enabled", true);
-        this.extraLootChance        = clamp(extraLoot != null ? extraLoot.getDouble("base-chance", 0.20) : 0.20, 0.0, 1.0);
-        this.extraLootStormBonus    = clamp(extraLoot != null ? extraLoot.getDouble("storm-bonus", 0.15) : 0.15, 0.0, 1.0);
+        this.extraLootChance        = clamp(extraLoot != null ? extraLoot.getDouble("base-chance", 0.45) : 0.45, 0.0, 1.0);
+        this.extraLootStormBonus    = clamp(extraLoot != null ? extraLoot.getDouble("storm-bonus", 0.25) : 0.25, 0.0, 1.0);
         this.lootEntries = new ArrayList<>();
         this.lootTotalWeight = 0;
         ConfigurationSection drops = extraLoot != null ? extraLoot.getConfigurationSection("drops") : null;
@@ -182,11 +182,23 @@ public final class NightfallConfig {
         }
         if (this.lootEntries.isEmpty()) {
             // Sensible fallback so misconfiguration doesn't silently disable drops.
-            this.lootEntries.add(new LootEntry(Material.IRON_NUGGET, 30, 1, 3));
-            this.lootEntries.add(new LootEntry(Material.ARROW, 25, 2, 4));
-            this.lootEntries.add(new LootEntry(Material.GOLD_NUGGET, 15, 1, 2));
-            this.lootEntries.add(new LootEntry(Material.EMERALD, 6, 1, 1));
-            this.lootTotalWeight = 76;
+            this.lootEntries.add(new LootEntry(Material.IRON_INGOT, 25, 2, 5));
+            this.lootEntries.add(new LootEntry(Material.COPPER_INGOT, 20, 3, 6));
+            this.lootEntries.add(new LootEntry(Material.ARROW, 20, 8, 16));
+            this.lootEntries.add(new LootEntry(Material.REDSTONE, 18, 4, 8));
+            this.lootEntries.add(new LootEntry(Material.GOLD_INGOT, 18, 2, 4));
+            this.lootEntries.add(new LootEntry(Material.COAL, 15, 3, 6));
+            this.lootEntries.add(new LootEntry(Material.LAPIS_LAZULI, 15, 3, 6));
+            this.lootEntries.add(new LootEntry(Material.EXPERIENCE_BOTTLE, 12, 2, 4));
+            this.lootEntries.add(new LootEntry(Material.EMERALD, 12, 1, 3));
+            this.lootEntries.add(new LootEntry(Material.GLOWSTONE_DUST, 10, 3, 6));
+            this.lootEntries.add(new LootEntry(Material.DIAMOND, 8, 1, 2));
+            this.lootEntries.add(new LootEntry(Material.OBSIDIAN, 6, 1, 3));
+            this.lootEntries.add(new LootEntry(Material.ENDER_PEARL, 6, 1, 2));
+            this.lootEntries.add(new LootEntry(Material.BLAZE_ROD, 6, 1, 2));
+            this.lootEntries.add(new LootEntry(Material.NAME_TAG, 3, 1, 1));
+            this.lootEntries.add(new LootEntry(Material.TOTEM_OF_UNDYING, 1, 1, 1));
+            this.lootTotalWeight = 195;
         }
 
         this.dummyEnabled        = c.getBoolean("night.logout-dummy.enabled", true);
